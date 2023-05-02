@@ -14,7 +14,7 @@ rsi_val = ta.rsi(close, rsi_length)
 var last_signal_time = 0
 var buy_signal = false
 var sell_signal = false
-entry_price = 0.0
+var entry_price = 0.0
 stop_loss = ta.lowest(low, 5)
 stop_loss2 = ta.highest(high, 5)
 balance = strategy.equity
@@ -23,43 +23,51 @@ balance = strategy.equity
 enter = 0
 senter = 0
 
+position_size = 1000
+position_size2 = 1000
+
 prev_high = ta.highest(high, 3)[1]
 prev_low = ta.lowest(low, 3)[1]
 // Check for buy and sell signals
-if rsi_val > sell_rsi_threshold and bar_index > last_signal_time + wait_time and close < prev_low and hour >= 10 and hour <= 21
+if rsi_val > sell_rsi_threshold and close < prev_low and hour >= 10 and hour <= 21
     label.new(bar_index, high, text="Sell", color=color.red, textcolor=color.white, style=label.style_label_up, size=size.tiny, yloc=yloc.abovebar)
     last_signal_time := bar_index
     entry_price := close
     senter := 1
+    strategy.entry("Short", strategy.short, qty=position_size2, stop=entry_price+100,oca_name="Entry")
     
-if rsi_val < buy_rsi_threshold and bar_index > last_signal_time + wait_time and close > prev_high and hour >= 10 and hour <= 21
+if rsi_val < buy_rsi_threshold and close > prev_high and hour >= 10 and hour <= 21
     label.new(bar_index, low, text="Buy", color=color.green, textcolor=color.white, style=label.style_label_down, size=size.tiny, yloc=yloc.belowbar)
     last_signal_time := bar_index
     entry_price := close
     enter := 1
+    strategy.entry("Long", strategy.long, qty=position_size, stop=entry_price-100, oca_name="Entry2")
 
 
 
-position_size = 1000
-position_size2 = 1000
 
-if enter == 1
-    strategy.entry("Long", strategy.long, qty=position_size, limit=entry_price, stop=stop_loss, oca_name="Entry")
+
+
+
+// and bar_index > last_signal_time + wait_time 
+
+// if enter == 1
+//     strategy.entry("Long", strategy.long, qty=position_size, limit=entry_price, stop=stop_loss, oca_name="Entry")
     
 
-if senter == 1
-    strategy.entry("Short", strategy.short, qty=position_size2, limit=entry_price, stop=stop_loss2, oca_name="Entry2")
+// if senter == 1
+//     strategy.entry("Short", strategy.short, qty=position_size2, limit=entry_price, stop=stop_loss2, oca_name="Entry2")
     
 
-// Exit long position
-if strategy.position_size > 0 and enter == 1
+// // Exit long position
+if close< entry_price-100
     profit_target = entry_price + (entry_price - stop_loss) * 2
     strategy.exit("Long", "Entry", limit=profit_target)
     enter := 0
 
-if strategy.position_size > 0 and senter == 1
-    profit_target = entry_price + (entry_price - stop_loss2) * 2
-    strategy.exit("Short", "Entry2", limit=profit_target)
+if close>entry_price+100 == 1
+    profit_target1 = entry_price + (entry_price - stop_loss2) * 2
+    strategy.exit("Short", "Entry2", limit=profit_target1)
     senter := 0
 
 
